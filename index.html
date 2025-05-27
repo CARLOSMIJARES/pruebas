@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro | SOUL Concept Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Raleway', sans-serif;
+      background-color: #e7ceb4;
+      color: black;
+    }
+
+    .calendar {
+      width: 400px;
+      background-color: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      text-align: center;
+    }
+
+    .day {
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .day:hover {
+      background-color: #f4e0d1;
+    }
+
+    .selected {
+      background-color: #dabea3;
+      color: white;
+    }
+
+    .today {
+      border: 2px solid #dabea3;
+    }
+
+    /* Tabla horario */
+    .schedule-container {
+      width: 400px;
+      background: white;
+      border-radius: 12px;
+      padding: 12px 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-top: 8px;
+    }
+    .schedule-header, .schedule-row {
+      display: grid;
+      grid-template-columns: 90px minmax(220px, 2.5fr) minmax(160px, 1.5fr);
+      gap: 16px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.125rem;
+      border-bottom: 2px solid #dabea3;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.5rem;
+      color: #000000cc;
+    }
+    .schedule-row {
+      font-weight: normal;
+      font-size: 1rem;
+      color: #4B5563;
+      padding: 4px 0;
+      border-radius: 6px;
+    }
+    .schedule-row:nth-child(odd) {
+      background-color: #faf5e9;
+    }
+
+  </style>
+</head>
+<body class="min-h-screen relative">
+
+  <!-- HEADER CON LOGO -->
+  <header class="w-full h-[200px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
+    <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL A LA IZQUIERDA -->
+  <div class="absolute top-[220px] left-[40px] flex flex-col">
+
+    <!-- ENCABEZADO: CALENDARIO + RELOJ + BOTONES -->
+    <div class="flex items-start space-x-10">
+
+      <!-- CALENDARIO -->
+      <div class="calendar" id="calendar"></div>
+
+      <!-- RELOJ Y BOTONES -->
+      <div class="flex flex-col items-end space-y-3 mt-2">
+
+        <div class="bg-white p-4 rounded-xl shadow text-2xl font-medium w-48 text-center" id="clock">
+          --:--:--
+        </div>
+
+        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-48">
+          Clientes
+        </button>
+
+        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-48">
+          Registrar Nuevo Cliente
+        </button>
+
+        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-48">
+          Registrar Nueva Reserva
+        </button>
+
+      </div>
+    </div>
+
+    <!-- TABLA HORARIO JUSTO DEBAJO DEL CALENDARIO -->
+    <div class="schedule-container">
+
+      <div class="schedule-header">
+        <div>HORA</div>
+        <div>NORLEANNYS</div>
+        <div>DALIA</div>
+      </div>
+
+      <div class="schedule-row"> <div>09:00</div><div>Disponible</div><div>Ocupado</div> </div>
+      <div class="schedule-row"> <div>10:00</div><div>Disponible</div><div>Disponible</div> </div>
+      <div class="schedule-row"> <div>11:00</div><div>Ocupado</div><div>Disponible</div> </div>
+      <div class="schedule-row"> <div>12:00</div><div>Disponible</div><div>Disponible</div> </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Reloj en formato AM/PM actualizado cada segundo
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      const seconds = now.getSeconds().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12;
+      hours = hours ? hours : 12; // el 0 se convierte en 12
+      const clock = document.getElementById("clock");
+      clock.textContent = `${hours.toString().padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Calendario
+    const calendarEl = document.getElementById("calendar");
+    const daysShort = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+
+    const todayDate = new Date();
+    let currentMonth = todayDate.getMonth();
+    let currentYear = todayDate.getFullYear();
+
+    function renderCalendar(month, year) {
+      const firstDay = new Date(year, month).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      let html = `
+        <div class="calendar-header">
+          <button onclick="prevMonth()">←</button>
+          <span class="font-medium capitalize">${new Date(year, month).toLocaleString('es-ES', { month: 'long' })} ${year}</span>
+          <button onclick="nextMonth()">→</button>
+        </div>
+        <div class="calendar-grid font-medium text-sm text-gray-700">
+          ${daysShort.map(d => `<div>${d}</div>`).join('')}
+      `;
+
+      let date = 1;
+      for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 7; j++) {
+          if (i === 0 && j < firstDay) {
+            html += `<div></div>`;
+          } else if (date > daysInMonth) {
+            break;
+          } else {
+            const isToday =
+              date === todayDate.getDate() &&
+              month === todayDate.getMonth() &&
+              year === todayDate.getFullYear();
+
+            html += `<div class="day ${isToday ? 'today selected' : ''}" onclick="selectDate(${date}, ${month}, ${year})">${date}</div>`;
+            date++;
+          }
+        }
+      }
+
+      html += `</div>`;
+      calendarEl.innerHTML = html;
+    }
+
+    function selectDate(day, month, year) {
+      const allDays = document.querySelectorAll(".day");
+      allDays.forEach(d => d.classList.remove("selected"));
+      event.target.classList.add("selected");
+
+      const selectedDate = new Date(year, month, day);
+      console.log("Fecha seleccionada:", selectedDate.toISOString().split('T')[0]);
+    }
+
+    function prevMonth() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    function nextMonth() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    renderCalendar(currentMonth, currentYear);
+  </script>
+
+</body>
+</html>

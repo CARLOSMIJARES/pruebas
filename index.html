@@ -14,7 +14,7 @@
     }
 
     .calendar {
-      width: 400px;
+      width: 300px;
       background-color: white;
       border-radius: 12px;
       padding: 20px;
@@ -54,39 +54,6 @@
     .today {
       border: 2px solid #dabea3;
     }
-
-    /* Tabla horario */
-    .schedule-container {
-      width: 400px;
-      background: white;
-      border-radius: 12px;
-      padding: 12px 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      margin-top: 8px;
-    }
-    .schedule-header, .schedule-row {
-      display: grid;
-      grid-template-columns: 90px minmax(220px, 2.5fr) minmax(160px, 1.5fr);
-      gap: 16px;
-      text-align: center;
-      font-weight: 600;
-      font-size: 1.125rem;
-      border-bottom: 2px solid #dabea3;
-      padding-bottom: 0.5rem;
-      margin-bottom: 0.5rem;
-      color: #000000cc;
-    }
-    .schedule-row {
-      font-weight: normal;
-      font-size: 1rem;
-      color: #4B5563;
-      padding: 4px 0;
-      border-radius: 6px;
-    }
-    .schedule-row:nth-child(odd) {
-      background-color: #faf5e9;
-    }
-
   </style>
 </head>
 <body class="min-h-screen relative">
@@ -96,19 +63,18 @@
     <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
   </header>
 
-  <!-- CONTENEDOR PRINCIPAL A LA IZQUIERDA -->
-  <div class="absolute top-[220px] left-[40px] flex flex-col">
+  <!-- CONTENEDOR CALENDARIO + RELOJ + BOTONES + TABLA -->
+  <div class="absolute top-[220px] left-[40px] flex flex-col space-y-6">
 
-    <!-- ENCABEZADO: CALENDARIO + RELOJ + BOTONES -->
+    <!-- SECCIÓN CALENDARIO Y BOTONES -->
     <div class="flex items-start space-x-10">
 
       <!-- CALENDARIO -->
       <div class="calendar" id="calendar"></div>
 
       <!-- RELOJ Y BOTONES -->
-      <div class="flex flex-col items-end space-y-3 mt-2">
-
-        <div class="bg-white p-4 rounded-xl shadow text-2xl font-medium w-48 text-center" id="clock">
+      <div class="text-right mt-2 flex flex-col items-end space-y-3">
+        <div class="bg-white p-4 rounded-xl shadow text-2xl font-medium" id="clock">
           --:--:--
         </div>
 
@@ -123,26 +89,34 @@
         <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-48">
           Registrar Nueva Reserva
         </button>
-
       </div>
     </div>
 
-    <!-- TABLA HORARIO JUSTO DEBAJO DEL CALENDARIO -->
-    <div class="schedule-container">
-
-      <div class="schedule-header">
+    <!-- TABLA DE HORARIOS Y MANICURISTAS -->
+    <div class="bg-white rounded-lg shadow p-4 w-[800px]">
+      <div class="grid grid-cols-3 font-semibold border-b border-gray-300 pb-2 mb-2">
         <div>HORA</div>
         <div>NORLEANNYS</div>
         <div>DALIA</div>
       </div>
-
-      <div class="schedule-row"> <div>09:00</div><div>Disponible</div><div>Ocupado</div> </div>
-      <div class="schedule-row"> <div>10:00</div><div>Disponible</div><div>Disponible</div> </div>
-      <div class="schedule-row"> <div>11:00</div><div>Ocupado</div><div>Disponible</div> </div>
-      <div class="schedule-row"> <div>12:00</div><div>Disponible</div><div>Disponible</div> </div>
-
+      <!-- Aquí irían los horarios específicos, por ahora se muestra contenido estático de ejemplo -->
+      <div class="grid grid-cols-3 border-b border-gray-200 py-2">
+        <div>10:00</div>
+        <div>-</div>
+        <div>-</div>
+      </div>
+      <div class="grid grid-cols-3 border-b border-gray-200 py-2">
+        <div>10:30</div>
+        <div>-</div>
+        <div>-</div>
+      </div>
+      <div class="grid grid-cols-3 border-b border-gray-200 py-2">
+        <div>12:00</div>
+        <div>-</div>
+        <div>-</div>
+      </div>
+      <!-- Puedes añadir más filas según sea necesario -->
     </div>
-
   </div>
 
   <script>
@@ -213,6 +187,8 @@
 
       const selectedDate = new Date(year, month, day);
       console.log("Fecha seleccionada:", selectedDate.toISOString().split('T')[0]);
+
+      // Aquí podrías actualizar la tabla de horarios dinámicamente con reservas de Firebase o similar
     }
 
     function prevMonth() {

@@ -12,112 +12,103 @@
       background-color: #e7ceb4;
       color: black;
     }
-
     .calendar {
-      width: 300px;
       background-color: white;
       border-radius: 12px;
       padding: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      position: relative;
     }
-
     .calendar-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
     }
-
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 5px;
       text-align: center;
     }
-
     .day {
       padding: 8px;
       border-radius: 6px;
       cursor: pointer;
     }
-
     .day:hover {
       background-color: #f4e0d1;
     }
-
     .selected {
       background-color: #dabea3;
       color: white;
     }
-
     .today {
       border: 2px solid #dabea3;
     }
   </style>
 </head>
-<body class="min-h-screen relative">
+<body class="min-h-screen bg-[#e7ceb4]">
 
   <!-- HEADER CON LOGO -->
-  <header class="w-full h-[200px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
+  <header class="w-full h-[150px] sm:h-[200px] sticky top-0 z-40 bg-[#DABEA3] flex items-center justify-center">
     <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
   </header>
 
-  <!-- CONTENEDOR CALENDARIO + RELOJ + BOTONES + TABLA -->
-  <div class="absolute top-[220px] left-[40px] flex flex-col space-y-6">
-
-    <!-- SECCIÓN CALENDARIO Y BOTONES -->
-    <div class="flex items-start space-x-10">
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="px-4 py-6 sm:px-10">
+    <div class="max-w-screen-lg mx-auto flex flex-col space-y-6">
 
       <!-- CALENDARIO -->
-      <div class="calendar" id="calendar"></div>
+      <div class="calendar w-full sm:w-[300px] mx-auto" id="calendar"></div>
 
       <!-- RELOJ Y BOTONES -->
-      <div class="text-right mt-2 flex flex-col items-end space-y-3">
+      <div class="flex flex-col items-center sm:items-end space-y-3">
         <div class="bg-white p-4 rounded-xl shadow text-2xl font-medium" id="clock">
           --:--:--
         </div>
 
-        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-48">
+        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full sm:w-48">
           Clientes
         </button>
 
-        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-48">
+        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full sm:w-48">
           Registrar Nuevo Cliente
         </button>
 
-        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-48">
+        <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full sm:w-48">
           Registrar Nueva Reserva
         </button>
       </div>
-    </div>
 
-    <!-- TABLA DE HORARIOS Y MANICURISTAS -->
-    <div class="bg-white rounded-lg shadow p-4 w-[800px]">
-      <div class="grid grid-cols-3 font-semibold border-b border-gray-300 pb-2 mb-2">
-        <div>HORA</div>
-        <div>NORLEANNYS</div>
-        <div>DALIA</div>
+      <!-- TABLA DE HORARIOS Y MANICURISTAS -->
+      <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
+        <div class="min-w-[600px]">
+          <div class="grid grid-cols-3 font-semibold border-b border-gray-300 pb-2 mb-2">
+            <div>HORA</div>
+            <div>NORLEANNYS</div>
+            <div>DALIA</div>
+          </div>
+          <div class="grid grid-cols-3 border-b border-gray-200 py-2">
+            <div>10:00</div>
+            <div>-</div>
+            <div>-</div>
+          </div>
+          <div class="grid grid-cols-3 border-b border-gray-200 py-2">
+            <div>11:00</div>
+            <div>-</div>
+            <div>-</div>
+          </div>
+          <div class="grid grid-cols-3 border-b border-gray-200 py-2">
+            <div>12:00</div>
+            <div>-</div>
+            <div>-</div>
+          </div>
+          <!-- Más filas si lo deseas -->
+        </div>
       </div>
-      <!-- Aquí irían los horarios específicos, por ahora se muestra contenido estático de ejemplo -->
-      <div class="grid grid-cols-3 border-b border-gray-200 py-2">
-        <div>10:00</div>
-        <div>-</div>
-        <div>-</div>
-      </div>
-      <div class="grid grid-cols-3 border-b border-gray-200 py-2">
-        <div>10:30</div>
-        <div>-</div>
-        <div>-</div>
-      </div>
-      <div class="grid grid-cols-3 border-b border-gray-200 py-2">
-        <div>12:00</div>
-        <div>-</div>
-        <div>-</div>
-      </div>
-      <!-- Puedes añadir más filas según sea necesario -->
+
     </div>
-  </div>
+  </main>
 
   <script>
     // Reloj en formato AM/PM actualizado cada segundo
@@ -128,9 +119,8 @@
       const seconds = now.getSeconds().toString().padStart(2, "0");
       const ampm = hours >= 12 ? "PM" : "AM";
       hours = hours % 12;
-      hours = hours ? hours : 12; // el 0 se convierte en 12
-      const clock = document.getElementById("clock");
-      clock.textContent = `${hours.toString().padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
+      hours = hours ? hours : 12;
+      document.getElementById("clock").textContent = `${hours.toString().padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
     }
     setInterval(updateClock, 1000);
     updateClock();
@@ -165,11 +155,9 @@
           } else if (date > daysInMonth) {
             break;
           } else {
-            const isToday =
-              date === todayDate.getDate() &&
-              month === todayDate.getMonth() &&
-              year === todayDate.getFullYear();
-
+            const isToday = date === todayDate.getDate() &&
+                            month === todayDate.getMonth() &&
+                            year === todayDate.getFullYear();
             html += `<div class="day ${isToday ? 'today selected' : ''}" onclick="selectDate(${date}, ${month}, ${year})">${date}</div>`;
             date++;
           }
@@ -187,8 +175,6 @@
 
       const selectedDate = new Date(year, month, day);
       console.log("Fecha seleccionada:", selectedDate.toISOString().split('T')[0]);
-
-      // Aquí podrías actualizar la tabla de horarios dinámicamente con reservas de Firebase o similar
     }
 
     function prevMonth() {

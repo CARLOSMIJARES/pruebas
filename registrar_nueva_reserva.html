@@ -22,11 +22,39 @@
   <main class="p-6 max-w-xl mx-auto">
     <h1 class="text-2xl font-semibold text-center mb-6">Formulario de Reserva</h1>
     <form id="reservaForm" class="bg-white p-6 rounded-xl shadow space-y-5">
-      <div>
-        <label for="cliente" class="block font-medium mb-1">Nombre del Cliente</label>
-        <input type="text" id="cliente" name="cliente" placeholder="Ej. Laura Martínez" required
-          class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
-      </div>
+<!-- Campo Nombre + Lupa -->
+<div>
+  <label for="cliente" class="block font-medium mb-1">Nombre del Cliente</label>
+  <div class="flex items-center gap-2">
+    <input type="text" id="cliente" name="cliente" placeholder="Ej. Laura" required
+      class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
+    <button type="button" id="buscarCliente"
+      class="p-3 bg-[#dabea3] text-white rounded-lg hover:bg-[#c6a982] transition-all">
+      🔍
+    </button>
+  </div>
+</div>
+
+<!-- Campo Apellido -->
+<div>
+  <label for="apellido" class="block font-medium mb-1">Apellido del Cliente</label>
+  <input type="text" id="apellido" name="apellido" placeholder="Ej. Martínez" required
+    class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
+</div>
+
+<!-- Modal de Selección de Cliente -->
+<div id="modalClientes"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+  <div
+    class="bg-white p-4 rounded-lg w-[90%] max-w-sm max-h-[80vh] overflow-y-auto shadow-lg">
+    <h2 class="text-lg font-semibold text-center mb-4">Seleccionar Cliente</h2>
+    <ul id="listaClientes" class="space-y-2"></ul>
+    <button id="cerrarModal"
+      class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 block mx-auto mt-4">
+      Cerrar
+    </button>
+  </div>
+</div>
 
       <div>
         <label for="fecha" class="block font-medium mb-1">Fecha</label>
@@ -108,21 +136,59 @@
   </main>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
-      authDomain: "soul-concept-studio-37175.firebaseapp.com",
-      projectId: "soul-concept-studio-37175",
-      storageBucket: "soul-concept-studio-37175.appspot.com",
-      messagingSenderId: "1012154216474",
-      appId: "1:1012154216474:web:e43609177c22da585be1a3",
-      measurementId: "G-ZLL107ZRDP"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
+  authDomain: "soul-concept-studio-37175.firebaseapp.com",
+  projectId: "soul-concept-studio-37175",
+  storageBucket: "soul-concept-studio-37175.appspot.com",
+  messagingSenderId: "1012154216474",
+  appId: "1:1012154216474:web:e43609177c22da585be1a3",
+  measurementId: "G-ZLL107ZRDP"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const modal = document.getElementById("modalClientes");
+const listaClientes = document.getElementById("listaClientes");
+const buscarClienteBtn = document.getElementById("buscarCliente");
+const cerrarModalBtn = document.getElementById("cerrarModal");
+
+buscarClienteBtn.addEventListener("click", async () => {
+  // Mostrar modal
+  modal.classList.remove("hidden");
+  listaClientes.innerHTML = "<p>Cargando...</p>";
+
+  try {
+    const querySnapshot = await getDocs(collection(db, "CLIENTES"));
+    if (querySnapshot.empty) {
+      listaClientes.innerHTML = "<p>No hay clientes registrados.</p>";
+    } else {
+      listaClientes.innerHTML = "";
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.className = "border p-2 rounded hover:bg-[#dabea3] cursor-pointer";
+        li.textContent = `${data.nombre} ${data.apellido}`;
+        li.addEventListener("click", () => {
+          document.getElementById("cliente").value = data.nombre;
+          document.getElementById("apellido").value = data.apellido;
+          modal.classList.add("hidden");
+        });
+        listaClientes.appendChild(li);
+      });
+    }
+  } catch (error) {
+    listaClientes.innerHTML = `<p>Error al cargar clientes: ${error.message}</p>`;
+  }
+});
+
+cerrarModalBtn.addEventListener("click", () => {
+  modal.classList.add("hidden");
+});
 
     const servicios = [
       { nombre: "ACRILICO (LARGO 1-2)", precio: 30, tiempo: 120 },

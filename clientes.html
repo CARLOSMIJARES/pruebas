@@ -10,31 +10,6 @@
     body {
       font-family: 'Raleway', sans-serif;
       background-color: #e7ceb4;
-      color: black;
-    }
-
-    /* Mejoras para tabla en móvil */
-    @media (max-width: 640px) {
-      table {
-        font-size: 0.8rem;
-      }
-      th, td {
-        padding: 0.4rem 0.6rem;
-      }
-      /* Min ancho para teléfono y correo */
-      th:nth-child(3), td:nth-child(3),
-      th:nth-child(4), td:nth-child(4) {
-        min-width: 100px;
-      }
-      /* Ocultar columna fecha registro en móvil */
-      th:nth-child(5), td:nth-child(5) {
-        display: none;
-      }
-      /* Botones más pequeños */
-      td:last-child button, td:last-child a {
-        font-size: 0.7rem;
-        padding: 0.3rem 0.5rem;
-      }
     }
   </style>
 </head>
@@ -54,7 +29,11 @@
 
     <h1 class="text-2xl font-semibold text-center mb-6">Clientes Registrados</h1>
 
-    <div class="overflow-x-auto">
+    <!-- Cards para móviles -->
+    <div id="clientesCards" class="space-y-4 sm:hidden"></div>
+
+    <!-- Tabla para escritorio -->
+    <div class="hidden sm:block overflow-x-auto">
       <table class="min-w-full bg-white rounded-xl shadow text-sm">
         <thead class="bg-[#dabea3] text-white">
           <tr>
@@ -62,7 +41,7 @@
             <th class="text-left px-4 py-3">Apellido</th>
             <th class="text-left px-4 py-3">Teléfono</th>
             <th class="text-left px-4 py-3">Correo</th>
-            <th class="text-left px-4 py-3">Fecha de Registro</th>
+            <th class="text-left px-4 py-3">Fecha</th>
             <th class="text-left px-4 py-3">Acciones</th>
           </tr>
         </thead>
@@ -120,9 +99,12 @@
     const db = getFirestore(app);
 
     const tbody = document.getElementById("clientesBody");
+    const cardsContainer = document.getElementById("clientesCards");
 
     async function cargarClientes() {
-      tbody.innerHTML = ""; // limpiar tabla antes de cargar
+      tbody.innerHTML = "";
+      cardsContainer.innerHTML = "";
+
       const clientesCol = collection(db, "CLIENTES");
       const snapshot = await getDocs(clientesCol);
 
@@ -131,6 +113,7 @@
         const id = docSnap.id;
         const fecha = cliente.fechaRegistro?.toDate().toLocaleDateString("es-ES") || '';
 
+        // Tabla (desktop)
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="border px-4 py-2">${cliente.nombre}</td>
@@ -153,6 +136,30 @@
           </td>
         `;
         tbody.appendChild(tr);
+
+        // Card (mobile)
+        const card = document.createElement("div");
+        card.className = "bg-white rounded-lg shadow p-4";
+        card.innerHTML = `
+          <p><strong>Nombre:</strong> ${cliente.nombre} ${cliente.apellido}</p>
+          <p><strong>Teléfono:</strong> ${cliente.telefono}</p>
+          <p><strong>Correo:</strong> ${cliente.correo}</p>
+          <p><strong>Fecha:</strong> ${fecha}</p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="bg-yellow-400 text-white px-3 py-1 rounded text-sm"
+              onclick="editarCliente('${id}', '${cliente.nombre}', '${cliente.apellido}', '${cliente.telefono}', '${cliente.correo}')">
+              📝 Modificar
+            </button>
+            <a href="registrar_nueva_reserva.html?nombre=${encodeURIComponent(cliente.nombre)}&apellido=${encodeURIComponent(cliente.apellido)}&correo=${encodeURIComponent(cliente.correo)}&telefono=${encodeURIComponent(cliente.telefono)}" 
+               class="bg-green-600 text-white px-3 py-1 rounded text-sm">
+              📅 Reservar
+            </a>
+            <button class="bg-red-600 text-white px-3 py-1 rounded text-sm" onclick="eliminarCliente('${id}')">
+              🗑️ Eliminar
+            </button>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
       });
     }
 
@@ -187,7 +194,7 @@
     });
 
     window.eliminarCliente = async (id) => {
-      if(confirm("¿Seguro que quieres eliminar este cliente? Esta acción no se puede deshacer.")) {
+      if(confirm("¿Seguro que quieres eliminar este cliente?")) {
         await deleteDoc(doc(db, "CLIENTES", id));
         alert("Cliente eliminado correctamente.");
         cargarClientes();

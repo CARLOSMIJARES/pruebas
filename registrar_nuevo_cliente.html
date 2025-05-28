@@ -5,7 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Registro de Cliente | SOUL Concept Studio</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500&display=swap" rel="stylesheet">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
+      authDomain: "soul-concept-studio-37175.firebaseapp.com",
+      projectId: "soul-concept-studio-37175",
+      storageBucket: "soul-concept-studio-37175.firebasestorage.app",
+      messagingSenderId: "1012154216474",
+      appId: "1:1012154216474:web:e43609177c22da585be1a3",
+      measurementId: "G-ZLL107ZRDP"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("registroForm");
+      const errorMensaje = document.getElementById("correoError");
+      const repetidoMensaje = document.getElementById("correoRepetidoError");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const nombre = form.nombre.value.trim();
+        const apellido = form.apellido.value.trim();
+        const correo = form.correo.value.trim().toLowerCase();
+        const confirmarCorreo = form.confirmarCorreo.value.trim().toLowerCase();
+        const telefono = form.telefono.value.trim();
+
+        // Validación de correos iguales
+        if (correo !== confirmarCorreo) {
+          errorMensaje.classList.remove("hidden");
+          repetidoMensaje.classList.add("hidden");
+          return;
+        } else {
+          errorMensaje.classList.add("hidden");
+        }
+
+        // Validar repetición de correo en Firestore (solo si no es el correo genérico)
+        if (correo !== "noposee@gmail.com") {
+          const q = query(collection(db, "CLIENTES"), where("correo", "==", correo));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            repetidoMensaje.classList.remove("hidden");
+            return;
+          } else {
+            repetidoMensaje.classList.add("hidden");
+          }
+        }
+
+        // Guardar en Firestore con fecha de registro
+        try {
+          await addDoc(collection(db, "CLIENTES"), {
+            nombre,
+            apellido,
+            correo,
+            telefono,
+            fechaRegistro: new Date()
+          });
+
+          alert("Cliente registrado correctamente");
+          form.reset();
+        } catch (error) {
+          alert("Error al registrar cliente: " + error.message);
+        }
+      });
+    });
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Raleway', sans-serif;
@@ -49,6 +120,8 @@
         <label for="correo" class="block font-medium mb-1">Correo electrónico</label>
         <input type="email" id="correo" name="correo" placeholder="cliente@email.com" required
           class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
+        <p id="correoError" class="text-sm text-red-600 hidden mt-1">Los correos no coinciden.</p>
+        <p id="correoRepetidoError" class="text-sm text-red-600 hidden mt-1">Este correo ya está registrado.</p>
       </div>
 
       <!-- Confirmar Correo -->
@@ -56,7 +129,6 @@
         <label for="confirmarCorreo" class="block font-medium mb-1">Confirmar correo electrónico</label>
         <input type="email" id="confirmarCorreo" name="confirmarCorreo" placeholder="Repite el correo" required
           class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
-        <p id="correoError" class="text-sm text-red-600 hidden mt-1">Los correos no coinciden.</p>
       </div>
 
       <!-- Teléfono -->
@@ -90,21 +162,6 @@
       </div>
     </form>
   </main>
-
-  <script>
-    document.getElementById("registroForm").addEventListener("submit", function (e) {
-      const correo = document.getElementById("correo").value;
-      const confirmarCorreo = document.getElementById("confirmarCorreo").value;
-      const errorMensaje = document.getElementById("correoError");
-
-      if (correo !== confirmarCorreo) {
-        e.preventDefault();
-        errorMensaje.classList.remove("hidden");
-      } else {
-        errorMensaje.classList.add("hidden");
-      }
-    });
-  </script>
 
 </body>
 </html>

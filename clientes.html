@@ -12,6 +12,30 @@
       background-color: #e7ceb4;
       color: black;
     }
+
+    /* Mejoras para tabla en móvil */
+    @media (max-width: 640px) {
+      table {
+        font-size: 0.8rem;
+      }
+      th, td {
+        padding: 0.4rem 0.6rem;
+      }
+      /* Min ancho para teléfono y correo */
+      th:nth-child(3), td:nth-child(3),
+      th:nth-child(4), td:nth-child(4) {
+        min-width: 100px;
+      }
+      /* Ocultar columna fecha registro en móvil */
+      th:nth-child(5), td:nth-child(5) {
+        display: none;
+      }
+      /* Botones más pequeños */
+      td:last-child button, td:last-child a {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.5rem;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen">

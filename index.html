@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>pagina administrador | SOUL Concept Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Raleway', sans-serif;
+      background-color: #e7ceb4;
+      color: black;
+    }
+
+    .calendar {
+      width: 100%;
+      max-width: 300px;
+      background-color: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      text-align: center;
+    }
+
+    .day {
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .day:hover {
+      background-color: #f4e0d1;
+    }
+
+    .selected {
+      background-color: #dabea3;
+      color: white;
+    }
+
+    .today {
+      border: 2px solid #dabea3;
+    }
+  </style>
+</head>
+<body class="min-h-screen relative pb-20">
+
+  <!-- HEADER CON LOGO (más pequeño) -->
+  <header class="w-full h-[100px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
+    <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="flex flex-col items-center px-4 mt-6 space-y-6">
+
+    <!-- CALENDARIO -->
+    <div class="calendar" id="calendar"></div>
+
+    <!-- BOTONES -->
+    <div class="flex flex-col items-center space-y-3 w-full max-w-[300px]">
+
+      <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full">
+        Clientes
+      </button>
+
+      <a href="registrar_nuevo_cliente.html" 
+         class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full text-center block">
+        Registrar Nuevo Cliente
+      </a>
+
+      <button class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full">
+        Registrar Nueva Reserva
+      </button>
+    </div>
+
+    <!-- TABLA DE HORARIOS -->
+    <div class="w-full overflow-x-auto max-w-screen-md">
+      <table class="min-w-[400px] w-full table-auto bg-white rounded-lg shadow mt-4">
+        <thead class="bg-[#dabea3] text-black text-sm uppercase">
+          <tr>
+            <th class="px-4 py-2 text-left">Hora</th>
+            <th class="px-4 py-2 text-left">Nor</th>
+            <th class="px-4 py-2 text-left">Dal</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm" id="tabla-horarios">
+          <!-- Filas llenadas por JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- SCRIPTS -->
+  <script>
+    // Generar tabla de horarios
+    const horarios = [];
+    for (let h = 8; h <= 21; h++) {
+      horarios.push(`${h.toString().padStart(2, '0')}:00`);
+      horarios.push(`${h.toString().padStart(2, '0')}:30`);
+    }
+    horarios.push("22:00");
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const tbody = document.getElementById("tabla-horarios");
+      horarios.forEach(hora => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="px-4 py-2 font-medium">${hora}</td>
+          <td class="px-4 py-2">-</td>
+          <td class="px-4 py-2">-</td>
+        `;
+        tbody.appendChild(row);
+      });
+    });
+
+    // Calendario
+    const calendarEl = document.getElementById("calendar");
+    const daysShort = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+    const todayDate = new Date();
+    let currentMonth = todayDate.getMonth();
+    let currentYear = todayDate.getFullYear();
+
+    function renderCalendar(month, year) {
+      const firstDay = new Date(year, month).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      let html = `
+        <div class="calendar-header">
+          <button onclick="prevMonth()">←</button>
+          <span class="font-medium capitalize">${new Date(year, month).toLocaleString('es-ES', { month: 'long' })} ${year}</span>
+          <button onclick="nextMonth()">→</button>
+        </div>
+        <div class="calendar-grid font-medium text-sm text-gray-700">
+          ${daysShort.map(d => `<div>${d}</div>`).join('')}
+      `;
+
+      let date = 1;
+      for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 7; j++) {
+          if (i === 0 && j < firstDay) {
+            html += `<div></div>`;
+          } else if (date > daysInMonth) {
+            break;
+          } else {
+            const isToday =
+              date === todayDate.getDate() &&
+              month === todayDate.getMonth() &&
+              year === todayDate.getFullYear();
+            html += `<div class="day ${isToday ? 'today selected' : ''}" onclick="selectDate(${date}, ${month}, ${year})">${date}</div>`;
+            date++;
+          }
+        }
+      }
+      html += `</div>`;
+      calendarEl.innerHTML = html;
+    }
+
+    function selectDate(day, month, year) {
+      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+      event.target.classList.add("selected");
+      const selectedDate = new Date(year, month, day);
+      console.log("Fecha seleccionada:", selectedDate.toISOString().split('T')[0]);
+    }
+
+    function prevMonth() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    function nextMonth() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    renderCalendar(currentMonth, currentYear);
+  </script>
+
+</body>
+</html>

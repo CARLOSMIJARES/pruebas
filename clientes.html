@@ -10,6 +10,7 @@
     body {
       font-family: 'Raleway', sans-serif;
       background-color: #e7ceb4;
+      color: black;
     }
   </style>
 </head>
@@ -29,11 +30,17 @@
 
     <h1 class="text-2xl font-semibold text-center mb-6">Clientes Registrados</h1>
 
-    <!-- Cards para móviles -->
-    <div id="clientesCards" class="space-y-4 sm:hidden"></div>
+    <div class="mb-6">
+      <input 
+        type="text" 
+        id="busquedaClientes" 
+        placeholder="Buscar por nombre, correo, teléfono..." 
+        class="w-full max-w-md mx-auto block px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-[#dabea3]" 
+      />
+    </div>
 
-    <!-- Tabla para escritorio -->
-    <div class="hidden sm:block overflow-x-auto">
+    <!-- Tabla de escritorio -->
+    <div class="hidden md:block overflow-x-auto">
       <table class="min-w-full bg-white rounded-xl shadow text-sm">
         <thead class="bg-[#dabea3] text-white">
           <tr>
@@ -41,13 +48,16 @@
             <th class="text-left px-4 py-3">Apellido</th>
             <th class="text-left px-4 py-3">Teléfono</th>
             <th class="text-left px-4 py-3">Correo</th>
-            <th class="text-left px-4 py-3">Fecha</th>
+            <th class="text-left px-4 py-3">Fecha de Registro</th>
             <th class="text-left px-4 py-3">Acciones</th>
           </tr>
         </thead>
         <tbody id="clientesBody" class="text-gray-700"></tbody>
       </table>
     </div>
+
+    <!-- Cards para móviles -->
+    <div id="cardsClientes" class="grid gap-4 md:hidden mt-4"></div>
   </main>
 
   <!-- MODAL DE EDICIÓN -->
@@ -99,21 +109,32 @@
     const db = getFirestore(app);
 
     const tbody = document.getElementById("clientesBody");
-    const cardsContainer = document.getElementById("clientesCards");
+    const cardsContainer = document.getElementById("cardsClientes");
+    let listaClientes = [];
 
     async function cargarClientes() {
       tbody.innerHTML = "";
       cardsContainer.innerHTML = "";
-
       const clientesCol = collection(db, "CLIENTES");
       const snapshot = await getDocs(clientesCol);
 
+      listaClientes = [];
       snapshot.forEach(docSnap => {
         const cliente = docSnap.data();
-        const id = docSnap.id;
+        listaClientes.push({ id: docSnap.id, ...cliente });
+      });
+
+      mostrarClientes(listaClientes);
+    }
+
+    function mostrarClientes(lista) {
+      tbody.innerHTML = "";
+      cardsContainer.innerHTML = "";
+
+      lista.forEach(cliente => {
+        const id = cliente.id;
         const fecha = cliente.fechaRegistro?.toDate().toLocaleDateString("es-ES") || '';
 
-        // Tabla (desktop)
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="border px-4 py-2">${cliente.nombre}</td>
@@ -122,22 +143,12 @@
           <td class="border px-4 py-2">${cliente.correo}</td>
           <td class="border px-4 py-2">${fecha}</td>
           <td class="border px-4 py-2 space-x-2">
-            <button class="bg-yellow-400 text-white px-3 py-1 rounded text-xs" 
-              onclick="editarCliente('${id}', '${cliente.nombre}', '${cliente.apellido}', '${cliente.telefono}', '${cliente.correo}')">
-              📝 Modificar
-            </button>
-            <a href="registrar_nueva_reserva.html?nombre=${encodeURIComponent(cliente.nombre)}&apellido=${encodeURIComponent(cliente.apellido)}&correo=${encodeURIComponent(cliente.correo)}&telefono=${encodeURIComponent(cliente.telefono)}" 
-               class="bg-green-600 text-white px-3 py-1 rounded text-xs">
-              📅 Reservar
-            </a>
-            <button class="bg-red-600 text-white px-3 py-1 rounded text-xs" onclick="eliminarCliente('${id}')">
-              🗑️ Eliminar
-            </button>
-          </td>
-        `;
+            <button class="bg-yellow-400 text-white px-3 py-1 rounded text-xs" onclick="editarCliente('${id}', '${cliente.nombre}', '${cliente.apellido}', '${cliente.telefono}', '${cliente.correo}')">📝 Modificar</button>
+            <a href="registrar_nueva_reserva.html?nombre=${encodeURIComponent(cliente.nombre)}&apellido=${encodeURIComponent(cliente.apellido)}&correo=${encodeURIComponent(cliente.correo)}&telefono=${encodeURIComponent(cliente.telefono)}" class="bg-green-600 text-white px-3 py-1 rounded text-xs">📅 Reservar</a>
+            <button class="bg-red-600 text-white px-3 py-1 rounded text-xs" onclick="eliminarCliente('${id}')">🗑️ Eliminar</button>
+          </td>`;
         tbody.appendChild(tr);
 
-        // Card (mobile)
         const card = document.createElement("div");
         card.className = "bg-white rounded-lg shadow p-4";
         card.innerHTML = `
@@ -146,19 +157,10 @@
           <p><strong>Correo:</strong> ${cliente.correo}</p>
           <p><strong>Fecha:</strong> ${fecha}</p>
           <div class="flex flex-wrap gap-2 mt-3">
-            <button class="bg-yellow-400 text-white px-3 py-1 rounded text-sm"
-              onclick="editarCliente('${id}', '${cliente.nombre}', '${cliente.apellido}', '${cliente.telefono}', '${cliente.correo}')">
-              📝 Modificar
-            </button>
-            <a href="registrar_nueva_reserva.html?nombre=${encodeURIComponent(cliente.nombre)}&apellido=${encodeURIComponent(cliente.apellido)}&correo=${encodeURIComponent(cliente.correo)}&telefono=${encodeURIComponent(cliente.telefono)}" 
-               class="bg-green-600 text-white px-3 py-1 rounded text-sm">
-              📅 Reservar
-            </a>
-            <button class="bg-red-600 text-white px-3 py-1 rounded text-sm" onclick="eliminarCliente('${id}')">
-              🗑️ Eliminar
-            </button>
-          </div>
-        `;
+            <button class="bg-yellow-400 text-white px-3 py-1 rounded text-sm" onclick="editarCliente('${id}', '${cliente.nombre}', '${cliente.apellido}', '${cliente.telefono}', '${cliente.correo}')">📝 Modificar</button>
+            <a href="registrar_nueva_reserva.html?nombre=${encodeURIComponent(cliente.nombre)}&apellido=${encodeURIComponent(cliente.apellido)}&correo=${encodeURIComponent(cliente.correo)}&telefono=${encodeURIComponent(cliente.telefono)}" class="bg-green-600 text-white px-3 py-1 rounded text-sm">📅 Reservar</a>
+            <button class="bg-red-600 text-white px-3 py-1 rounded text-sm" onclick="eliminarCliente('${id}')">🗑️ Eliminar</button>
+          </div>`;
         cardsContainer.appendChild(card);
       });
     }
@@ -194,12 +196,22 @@
     });
 
     window.eliminarCliente = async (id) => {
-      if(confirm("¿Seguro que quieres eliminar este cliente?")) {
+      if(confirm("¿Seguro que quieres eliminar este cliente? Esta acción no se puede deshacer.")) {
         await deleteDoc(doc(db, "CLIENTES", id));
         alert("Cliente eliminado correctamente.");
         cargarClientes();
       }
     };
+
+    document.getElementById("busquedaClientes").addEventListener("input", (e) => {
+      const texto = e.target.value.toLowerCase();
+      const filtrados = listaClientes.filter(cliente =>
+        `${cliente.nombre} ${cliente.apellido} ${cliente.telefono} ${cliente.correo} ${cliente.fechaRegistro?.toDate().toLocaleDateString("es-ES") || ''}`
+        .toLowerCase()
+        .includes(texto)
+      );
+      mostrarClientes(filtrados);
+    });
 
     cargarClientes();
   </script>

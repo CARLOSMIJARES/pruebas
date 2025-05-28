@@ -43,11 +43,13 @@
 </div>
 
 <!-- Modal de Selección de Cliente -->
+<!-- Modal de Selección de Cliente -->
 <div id="modalClientes"
   class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
-  <div
-    class="bg-white p-4 rounded-lg w-[90%] max-w-sm max-h-[80vh] overflow-y-auto shadow-lg">
+  <div class="bg-white p-4 rounded-lg w-[90%] max-w-sm max-h-[80vh] overflow-y-auto shadow-lg">
     <h2 class="text-lg font-semibold text-center mb-4">Seleccionar Cliente</h2>
+    <input type="text" id="busquedaCliente" placeholder="Buscar cliente..."
+      class="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
     <ul id="listaClientes" class="space-y-2"></ul>
     <button id="cerrarModal"
       class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 block mx-auto mt-4">
@@ -55,6 +57,7 @@
     </button>
   </div>
 </div>
+
 
       <div>
         <label for="fecha" class="block font-medium mb-1">Fecha</label>
@@ -156,6 +159,9 @@ const modal = document.getElementById("modalClientes");
 const listaClientes = document.getElementById("listaClientes");
 const buscarClienteBtn = document.getElementById("buscarCliente");
 const cerrarModalBtn = document.getElementById("cerrarModal");
+const busquedaClienteInput = document.getElementById("busquedaCliente");
+
+let todosLosClientes = []; // Almacena todos los clientes para filtrado
 
 buscarClienteBtn.addEventListener("click", async () => {
   // Mostrar modal
@@ -164,22 +170,16 @@ buscarClienteBtn.addEventListener("click", async () => {
 
   try {
     const querySnapshot = await getDocs(collection(db, "CLIENTES"));
+    todosLosClientes = []; // Reinicia la lista
     if (querySnapshot.empty) {
       listaClientes.innerHTML = "<p>No hay clientes registrados.</p>";
     } else {
       listaClientes.innerHTML = "";
       querySnapshot.forEach(doc => {
         const data = doc.data();
-        const li = document.createElement("li");
-        li.className = "border p-2 rounded hover:bg-[#dabea3] cursor-pointer";
-        li.textContent = `${data.nombre} ${data.apellido}`;
-        li.addEventListener("click", () => {
-          document.getElementById("cliente").value = data.nombre;
-          document.getElementById("apellido").value = data.apellido;
-          modal.classList.add("hidden");
-        });
-        listaClientes.appendChild(li);
+        todosLosClientes.push({ id: doc.id, ...data });
       });
+      mostrarClientesFiltrados(todosLosClientes);
     }
   } catch (error) {
     listaClientes.innerHTML = `<p>Error al cargar clientes: ${error.message}</p>`;
@@ -188,7 +188,36 @@ buscarClienteBtn.addEventListener("click", async () => {
 
 cerrarModalBtn.addEventListener("click", () => {
   modal.classList.add("hidden");
+  busquedaClienteInput.value = ""; // Limpiar campo búsqueda
 });
+
+busquedaClienteInput.addEventListener("input", (e) => {
+  const texto = e.target.value.toLowerCase();
+  const filtrados = todosLosClientes.filter(c =>
+    (`${c.nombre} ${c.apellido}`.toLowerCase().includes(texto))
+  );
+  mostrarClientesFiltrados(filtrados);
+});
+
+function mostrarClientesFiltrados(clientes) {
+  listaClientes.innerHTML = "";
+  if (clientes.length === 0) {
+    listaClientes.innerHTML = "<p>No se encontraron coincidencias.</p>";
+  } else {
+    clientes.forEach(data => {
+      const li = document.createElement("li");
+      li.className = "border p-2 rounded hover:bg-[#dabea3] cursor-pointer";
+      li.textContent = `${data.nombre} ${data.apellido}`;
+      li.addEventListener("click", () => {
+        document.getElementById("cliente").value = data.nombre;
+        document.getElementById("apellido").value = data.apellido;
+        modal.classList.add("hidden");
+        busquedaClienteInput.value = "";
+      });
+      listaClientes.appendChild(li);
+    });
+  }
+}
 
     const servicios = [
       { nombre: "ACRILICO (LARGO 1-2)", precio: 30, tiempo: 120 },

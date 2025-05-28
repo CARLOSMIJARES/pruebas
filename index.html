@@ -12,7 +12,6 @@
       background-color: #e7ceb4;
       color: black;
     }
-
     .calendar {
       width: 100%;
       max-width: 300px;
@@ -21,67 +20,95 @@
       padding: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
     .calendar-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
     }
-
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 5px;
       text-align: center;
     }
-
     .day {
       padding: 8px;
       border-radius: 6px;
       cursor: pointer;
     }
-
     .day:hover {
       background-color: #f4e0d1;
     }
-
     .selected {
       background-color: #dabea3;
       color: white;
     }
-
     .today {
       border: 2px solid #dabea3;
+    }
+    table {
+      width: 100%;
+      max-width: 600px;
+      margin-top: 20px;
+      background-color: white;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #dabaa3;
+    }
+    /* Diseño adaptado para columna de horas */
+    .columna-horas {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #f4e0d1;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 0.85rem;
+    }
+    .hora-bloque {
+      font-size: 1rem;
+      font-weight: 700;
+      color: black;
+      text-align: center;
+      flex: 1;
+    }
+    .hora-minutos {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.7rem;
+      color: #555;
+      text-align: right;
+      flex: 0.5;
     }
   </style>
 </head>
 <body class="min-h-screen relative pb-20">
 
-  <!-- HEADER CON LOGO (más pequeño) -->
   <header class="w-full h-[100px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
     <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
   </header>
 
-  <!-- CONTENEDOR PRINCIPAL -->
   <main class="flex flex-col items-center px-4 mt-6 space-y-6">
 
-    <!-- CALENDARIO -->
+    <!-- Calendario -->
     <div class="calendar" id="calendar"></div>
 
-    <!-- BOTONES -->
+    <!-- Botones -->
     <div class="flex flex-col items-center space-y-3 w-full max-w-[300px]">
-
-    <button onclick="window.location.href='clientes.html'" 
-        class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full">
-  Clientes
-</button>
-
+      <button onclick="window.location.href='clientes.html'" 
+          class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full">
+        Clientes
+      </button>
       <a href="registrar_nuevo_cliente.html" 
          class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full text-center block">
         Registrar Nuevo Cliente
-      </a>
-
       </a>
       <a href="registrar_nueva_reserva.html" 
          class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full text-center block">
@@ -89,47 +116,103 @@
       </a>
     </div>
 
-    <!-- TABLA DE HORARIOS -->
-    <div class="w-full overflow-x-auto max-w-screen-md">
-      <table class="min-w-[400px] w-full table-auto bg-white rounded-lg shadow mt-4">
-        <thead class="bg-[#dabea3] text-black text-sm uppercase">
-          <tr>
-            <th class="px-4 py-2 text-left">Hora</th>
-            <th class="px-4 py-2 text-left">Norle</th>
-            <th class="px-4 py-2 text-left">Dalia</th>
-          </tr>
-        </thead>
-        <tbody class="text-sm" id="tabla-horarios">
-          <!-- Filas llenadas por JavaScript -->
-        </tbody>
-      </table>
-    </div>
+    <!-- Tabla de horarios con subfilas -->
+    <table id="tabla-horarios">
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Norle</th>
+          <th>Dalia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Aquí se generan las filas dinámicamente -->
+      </tbody>
+    </table>
+
   </main>
 
-  <!-- SCRIPTS -->
-  <script>
-    // Generar tabla de horarios
-    const horarios = [];
-    for (let h = 8; h <= 21; h++) {
-      horarios.push(`${h.toString().padStart(2, '0')}:00`);
-      horarios.push(`${h.toString().padStart(2, '0')}:30`);
-    }
-    horarios.push("22:00");
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const tbody = document.getElementById("tabla-horarios");
-      horarios.forEach(hora => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td class="px-4 py-2 font-medium">${hora}</td>
-          <td class="px-4 py-2">-</td>
-          <td class="px-4 py-2">-</td>
-        `;
-        tbody.appendChild(row);
+    const firebaseConfig = {
+      apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
+      authDomain: "soul-concept-studio-37175.firebaseapp.com",
+      projectId: "soul-concept-studio-37175",
+      storageBucket: "soul-concept-studio-37175.appspot.com",
+      messagingSenderId: "1012154216474",
+      appId: "1:1012154216474:web:e43609177c22da585be1a3",
+      measurementId: "G-ZLL107ZRDP"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tablaHorarios = document.getElementById("tabla-horarios").getElementsByTagName("tbody")[0];
+    const bloquesHora = [];
+    for (let h = 8; h <= 21; h++) {
+      const hora = h.toString().padStart(2, '0');
+      bloquesHora.push(hora);
+    }
+
+    // Generar filas con subfilas de 15 minutos
+    bloquesHora.forEach(horaBase => {
+      const minutos = ["00", "15", "30", "45"];
+      minutos.forEach((minuto, idx) => {
+        const horaCompleta = `${horaBase}:${minuto}`;
+        const fila = document.createElement("tr");
+        if (idx === 0) {
+          fila.innerHTML = `
+            <td rowspan="4">
+              <div class="columna-horas">
+                <div class="hora-bloque">${horaBase}</div>
+                <div class="hora-minutos">
+                  <div>00</div>
+                  <div>15</div>
+                  <div>30</div>
+                  <div>45</div>
+                </div>
+              </div>
+            </td>
+            <td id="Norle-${horaCompleta}"></td>
+            <td id="Dalia-${horaCompleta}"></td>
+          `;
+        } else {
+          fila.innerHTML = `
+            <td id="Norle-${horaCompleta}"></td>
+            <td id="Dalia-${horaCompleta}"></td>
+          `;
+        }
+        tablaHorarios.appendChild(fila);
       });
     });
 
-    // Calendario
+    function cargarReservas(fecha) {
+      const reservasRef = collection(db, "reservas");
+      const q = query(reservasRef, where("fecha", "==", fecha));
+
+      onSnapshot(q, (snapshot) => {
+        bloquesHora.forEach(horaBase => {
+          ["00", "15", "30", "45"].forEach(minuto => {
+            const idNorle = `Norle-${horaBase}:${minuto}`;
+            const idDalia = `Dalia-${horaBase}:${minuto}`;
+            document.getElementById(idNorle).textContent = "";
+            document.getElementById(idDalia).textContent = "";
+          });
+        });
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const idCelda = `${data.manicurista}-${data.hora}`;
+          const celda = document.getElementById(idCelda);
+          if (celda) {
+            celda.textContent = data.cliente;
+          }
+        });
+      });
+    }
+
     const calendarEl = document.getElementById("calendar");
     const daysShort = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
     const todayDate = new Date();
@@ -158,27 +241,27 @@
           } else if (date > daysInMonth) {
             break;
           } else {
-            const isToday =
-              date === todayDate.getDate() &&
-              month === todayDate.getMonth() &&
-              year === todayDate.getFullYear();
-            html += `<div class="day ${isToday ? 'today selected' : ''}" onclick="selectDate(${date}, ${month}, ${year})">${date}</div>`;
+            const isToday = date === todayDate.getDate() && month === todayDate.getMonth() && year === todayDate.getFullYear();
+            html += `<div class="day ${isToday ? 'today selected' : ''}" onclick="selectDate(${date}, ${month}, ${year}, this)">${date}</div>`;
             date++;
           }
         }
       }
       html += `</div>`;
       calendarEl.innerHTML = html;
+
+      const fechaHoy = `${year}-${(month+1).toString().padStart(2, '0')}-${todayDate.getDate().toString().padStart(2, '0')}`;
+      cargarReservas(fechaHoy);
     }
 
-    function selectDate(day, month, year) {
+    window.selectDate = function(day, month, year, el) {
       document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-      event.target.classList.add("selected");
-      const selectedDate = new Date(year, month, day);
-      console.log("Fecha seleccionada:", selectedDate.toISOString().split('T')[0]);
+      el.classList.add("selected");
+      const fechaSeleccionada = `${year}-${(month+1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      cargarReservas(fechaSeleccionada);
     }
 
-    function prevMonth() {
+    window.prevMonth = function() {
       currentMonth--;
       if (currentMonth < 0) {
         currentMonth = 11;
@@ -187,7 +270,7 @@
       renderCalendar(currentMonth, currentYear);
     }
 
-    function nextMonth() {
+    window.nextMonth = function() {
       currentMonth++;
       if (currentMonth > 11) {
         currentMonth = 0;

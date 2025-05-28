@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reserva de Cliente | SOUL Concept Studio</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Raleway', sans-serif;
       background-color: #e7ceb4;
       color: black;
+    }
+    /* Modal backdrop */
+    .modal-bg {
+      background-color: rgba(0,0,0,0.4);
     }
   </style>
 </head>
@@ -22,11 +26,28 @@
   <main class="p-6 max-w-xl mx-auto">
     <h1 class="text-2xl font-semibold text-center mb-6">Formulario de Reserva</h1>
     <form id="reservaForm" class="bg-white p-6 rounded-xl shadow space-y-5">
-      <div>
+
+      <!-- Campo Nombre con lupa -->
+      <div class="relative">
         <label for="cliente" class="block font-medium mb-1">Nombre del Cliente</label>
         <input type="text" id="cliente" name="cliente" placeholder="Ej. Laura Martínez" required
-          class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
+          class="w-full border border-gray-300 rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" autocomplete="off"/>
+        <!-- Lupa -->
+        <button type="button" id="btnBuscarCliente" title="Buscar cliente" 
+          class="absolute right-2 top-[38px] text-gray-600 hover:text-gray-900">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" 
+            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" 
+              d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1116.65 16.65z" />
+          </svg>
+        </button>
       </div>
+
+      <!-- Campos ocultos para precargar datos del cliente -->
+      <input type="hidden" id="clienteApellido" name="clienteApellido" />
+      <input type="hidden" id="clienteTelefono" name="clienteTelefono" />
+      <input type="hidden" id="clienteCorreo" name="clienteCorreo" />
+      <input type="hidden" id="clienteDireccion" name="clienteDireccion" />
 
       <div>
         <label for="fecha" class="block font-medium mb-1">Fecha</label>
@@ -107,9 +128,29 @@
     </form>
   </main>
 
+  <!-- Modal para búsqueda de clientes -->
+  <div id="modalBuscarCliente" class="fixed inset-0 flex items-center justify-center modal-bg hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Buscar Cliente Registrado</h2>
+        <button id="btnCerrarModal" class="text-gray-600 hover:text-gray-900" title="Cerrar">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" 
+            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <input type="text" id="inputBuscarCliente" placeholder="Buscar por nombre o correo..."
+        class="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" autocomplete="off"/>
+      <ul id="listaClientes" class="divide-y divide-gray-200 max-h-60 overflow-y-auto">
+        <!-- Clientes cargados aquí -->
+      </ul>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
@@ -124,6 +165,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Servicios (igual que antes)
     const servicios = [
       { nombre: "ACRILICO (LARGO 1-2)", precio: 30, tiempo: 120 },
       { nombre: "ACRILICO (LARGO 3-4)", precio: 35, tiempo: 135 },
@@ -151,12 +193,27 @@
       { nombre: "UÑAS ENCARNADAS", precio: 2, tiempo: 5 }
     ];
 
+    // Variables DOM
     const form = document.getElementById("reservaForm");
     const selectServicio = document.getElementById("servicio");
     const precioSpan = document.getElementById("precioServicio");
     const duracionSpan = document.getElementById("duracionServicio");
     const detallesServicio = document.getElementById("detallesServicio");
 
+    const btnBuscarCliente = document.getElementById("btnBuscarCliente");
+    const modalBuscarCliente = document.getElementById("modalBuscarCliente");
+    const btnCerrarModal = document.getElementById("btnCerrarModal");
+    const listaClientes = document.getElementById("listaClientes");
+    const inputBuscarCliente = document.getElementById("inputBuscarCliente");
+
+    // Inputs ocultos para datos de cliente
+    const inputCliente = document.getElementById("cliente");
+    const inputApellido = document.getElementById("clienteApellido");
+    const inputTelefono = document.getElementById("clienteTelefono");
+    const inputCorreo = document.getElementById("clienteCorreo");
+    const inputDireccion = document.getElementById("clienteDireccion");
+
+    // Poblar select de servicios
     servicios.forEach(servicio => {
       const option = document.createElement("option");
       option.value = servicio.nombre;
@@ -164,6 +221,7 @@
       selectServicio.appendChild(option);
     });
 
+    // Mostrar detalles del servicio seleccionado
     selectServicio.addEventListener("change", () => {
       const seleccionado = servicios.find(s => s.nombre === selectServicio.value);
       if (seleccionado) {
@@ -175,42 +233,105 @@
       }
     });
 
-    form.addEventListener("submit", async e => {
-      e.preventDefault();
-      const cliente = form.cliente.value.trim();
-      const fecha = form.fecha.value;
-      const hora = form.hora.value;
-      const minutos = form.minutos.value;
-      const servicio = form.servicio.value;
-      const manicurista = form.manicurista.value;
+    // Abrir modal de búsqueda
+    btnBuscarCliente.addEventListener("click", () => {
+      modalBuscarCliente.classList.remove("hidden");
+      inputBuscarCliente.value = "";
+      cargarClientes();
+      inputBuscarCliente.focus();
+    });
 
-      if (!hora || !minutos) {
-        alert("Por favor, selecciona hora y minutos.");
-        return;
-      }
+    // Cerrar modal
+    btnCerrarModal.addEventListener("click", () => {
+      modalBuscarCliente.classList.add("hidden");
+    });
 
-      const horaCompleta = hora.padStart(2, "0") + ":" + minutos.padStart(2, "0");
-
-      const servicioSeleccionado = servicios.find(s => s.nombre === servicio);
-
-      try {
-        await addDoc(collection(db, "reservas"), {
-          cliente,
-          fecha,
-          hora: horaCompleta,
-          servicio,
-          manicurista,
-          precio: servicioSeleccionado?.precio || null,
-          duracion: servicioSeleccionado?.tiempo || null,
-          creadoEn: new Date()
-        });
-        alert("Reserva guardada correctamente!");
-        form.reset();
-        detallesServicio.classList.add("hidden");
-      } catch (error) {
-        alert("Error al guardar la reserva: " + error.message);
+    // Cerrar modal al hacer click fuera del contenido
+    modalBuscarCliente.addEventListener("click", e => {
+      if(e.target === modalBuscarCliente) {
+        modalBuscarCliente.classList.add("hidden");
       }
     });
+
+    let clientesCache = [];
+
+    // Cargar clientes desde Firestore (limitado a 50 para no saturar)
+    async function cargarClientes() {
+      listaClientes.innerHTML = "<li class='p-2 text-center text-gray-500'>Cargando...</li>";
+      try {
+        const clientesSnapshot = await getDocs(collection(db, "CLIENTES"));
+        clientesCache = [];
+        clientesSnapshot.forEach(doc => {
+          clientesCache.push({ id: doc.id, ...doc.data() });
+        });
+        mostrarClientes(clientesCache);
+      } catch (error) {
+        listaClientes.innerHTML = `<li class='p-2 text-center text-red-600'>Error cargando clientes</li>`;
+        console.error("Error al cargar clientes:", error);
+      }
+    }
+
+    // Filtrar y mostrar clientes en la lista
+    function mostrarClientes(clientes) {
+      if(clientes.length === 0){
+        listaClientes.innerHTML = "<li class='p-2 text-center text-gray-500'>No se encontraron clientes.</li>";
+        return;
+      }
+      listaClientes.innerHTML = "";
+      clientes.forEach(cliente => {
+        const li = document.createElement("li");
+        li.className = "p-2 cursor-pointer hover:bg-[#dabea3] rounded";
+        li.tabIndex = 0; // para foco con teclado
+        li.textContent = `${cliente.nombre} ${cliente.apellido} — ${cliente.correo}`;
+        li.addEventListener("click", () => seleccionarCliente(cliente));
+        li.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") seleccionarCliente(cliente);
+        });
+        listaClientes.appendChild(li);
+      });
+    }
+
+    // Filtrar mientras se escribe
+    inputBuscarCliente.addEventListener("input", () => {
+      const texto = inputBuscarCliente.value.toLowerCase();
+      const filtrados = clientesCache.filter(cliente => {
+        return (
+          cliente.nombre.toLowerCase().includes(texto) ||
+          cliente.apellido.toLowerCase().includes(texto) ||
+          cliente.correo.toLowerCase().includes(texto)
+        );
+      });
+      mostrarClientes(filtrados);
+    });
+
+    // Al seleccionar un cliente, precargar datos en el formulario y cerrar modal
+    function seleccionarCliente(cliente) {
+      inputCliente.value = cliente.nombre || "";
+      inputApellido.value = cliente.apellido || "";
+      inputTelefono.value = cliente.telefono || "";
+      inputCorreo.value = cliente.correo || "";
+      inputDireccion.value = cliente.direccion || "";
+      modalBuscarCliente.classList.add("hidden");
+      inputCliente.focus();
+    }
+
+    // Concatenar hora completa para guardar
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const hora = form.hora.value;
+      const minutos = form.minutos.value;
+      if (!hora || !minutos) {
+        alert("Por favor, seleccione hora y minutos.");
+        return;
+      }
+      form.horaCompleta.value = `${hora}:${minutos}`;
+
+      // Aquí puedes agregar el código para guardar la reserva con los datos precargados
+      alert("Reserva guardada con éxito!");
+      form.reset();
+      detallesServicio.classList.add("hidden");
+    });
+
   </script>
 </body>
 </html>

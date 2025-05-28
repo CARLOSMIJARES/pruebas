@@ -15,33 +15,25 @@
   </style>
 </head>
 <body class="min-h-screen">
-
-  <!-- HEADER -->
   <header class="w-full h-[100px] bg-[#DABEA3] flex items-center justify-center shadow-md">
     <img src="logo.png" alt="SOUL Concept Studio" class="h-3/4 object-contain" />
   </header>
 
-  <!-- CONTENIDO -->
   <main class="p-6 max-w-xl mx-auto">
     <h1 class="text-2xl font-semibold text-center mb-6">Formulario de Reserva</h1>
-
     <form id="reservaForm" class="bg-white p-6 rounded-xl shadow space-y-5">
-
-      <!-- Cliente -->
       <div>
         <label for="cliente" class="block font-medium mb-1">Nombre del Cliente</label>
         <input type="text" id="cliente" name="cliente" placeholder="Ej. Laura Martínez" required
           class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
       </div>
 
-      <!-- Fecha -->
       <div>
         <label for="fecha" class="block font-medium mb-1">Fecha</label>
         <input type="date" id="fecha" name="fecha" required
           class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#dabea3]" />
       </div>
 
-      <!-- Hora -->
       <div class="flex gap-4">
         <div class="flex-1">
           <label for="hora" class="block font-medium mb-1">Hora</label>
@@ -73,10 +65,8 @@
         </div>
       </div>
 
-      <!-- Campo oculto para hora completa -->
       <input type="hidden" id="horaCompleta" name="horaCompleta" />
 
-      <!-- Servicio -->
       <div>
         <label for="servicio" class="block font-medium mb-1">Servicio</label>
         <select id="servicio" name="servicio" required
@@ -85,13 +75,11 @@
         </select>
       </div>
 
-      <!-- Precio y Duración -->
       <div id="detallesServicio" class="text-sm text-gray-700 hidden">
         <p><strong>Precio:</strong> <span id="precioServicio"></span> €</p>
         <p><strong>Duración:</strong> <span id="duracionServicio"></span> minutos</p>
       </div>
 
-      <!-- Manicurista -->
       <div>
         <label for="manicurista" class="block font-medium mb-1">Manicurista</label>
         <select id="manicurista" name="manicurista" required
@@ -102,15 +90,11 @@
         </select>
       </div>
 
-      <!-- Botones -->
       <div class="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
-        <!-- Guardar Reserva -->
         <button type="submit"
           class="bg-[#dabea3] hover:bg-[#c6a982] text-white font-semibold py-3 px-6 rounded-lg transition-all flex-1 text-center">
           Guardar Reserva
         </button>
-
-        <!-- Botón Volver -->
         <a href="index.html"
            class="flex items-center gap-2 border border-gray-400 text-black font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 transition-all flex-1 justify-center bg-white">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
@@ -123,7 +107,23 @@
     </form>
   </main>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
+      authDomain: "soul-concept-studio-37175.firebaseapp.com",
+      projectId: "soul-concept-studio-37175",
+      storageBucket: "soul-concept-studio-37175.appspot.com",
+      messagingSenderId: "1012154216474",
+      appId: "1:1012154216474:web:e43609177c22da585be1a3",
+      measurementId: "G-ZLL107ZRDP"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const servicios = [
       { nombre: "ACRILICO (LARGO 1-2)", precio: 30, tiempo: 120 },
       { nombre: "ACRILICO (LARGO 3-4)", precio: 35, tiempo: 135 },
@@ -151,10 +151,11 @@
       { nombre: "UÑAS ENCARNADAS", precio: 2, tiempo: 5 }
     ];
 
+    const form = document.getElementById("reservaForm");
     const selectServicio = document.getElementById("servicio");
     const precioSpan = document.getElementById("precioServicio");
     const duracionSpan = document.getElementById("duracionServicio");
-    const detalles = document.getElementById("detallesServicio");
+    const detallesServicio = document.getElementById("detallesServicio");
 
     servicios.forEach(servicio => {
       const option = document.createElement("option");
@@ -168,30 +169,48 @@
       if (seleccionado) {
         precioSpan.textContent = seleccionado.precio;
         duracionSpan.textContent = seleccionado.tiempo;
-        detalles.classList.remove("hidden");
+        detallesServicio.classList.remove("hidden");
       } else {
-        detalles.classList.add("hidden");
+        detallesServicio.classList.add("hidden");
       }
     });
 
-    // Formar hora completa al enviar el formulario
-    const form = document.getElementById("reservaForm");
-    const selectHora = document.getElementById("hora");
-    const selectMinutos = document.getElementById("minutos");
-    const inputHoraCompleta = document.getElementById("horaCompleta");
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const cliente = form.cliente.value.trim();
+      const fecha = form.fecha.value;
+      const hora = form.hora.value;
+      const minutos = form.minutos.value;
+      const servicio = form.servicio.value;
+      const manicurista = form.manicurista.value;
 
-    form.addEventListener("submit", function(e) {
-      if (!selectHora.value || !selectMinutos.value) {
-        e.preventDefault();
-        alert("Por favor, selecciona hora y minutos correctamente.");
+      if (!hora || !minutos) {
+        alert("Por favor, selecciona hora y minutos.");
         return;
       }
-      // Formar la hora completa HH:MM
-      inputHoraCompleta.value = selectHora.value.padStart(2, '0') + ":" + selectMinutos.value.padStart(2, '0');
-      // Aquí puedes hacer más validaciones o procesos
-      // console.log("Hora completa:", inputHoraCompleta.value);
+
+      const horaCompleta = hora.padStart(2, "0") + ":" + minutos.padStart(2, "0");
+
+      const servicioSeleccionado = servicios.find(s => s.nombre === servicio);
+
+      try {
+        await addDoc(collection(db, "reservas"), {
+          cliente,
+          fecha,
+          hora: horaCompleta,
+          servicio,
+          manicurista,
+          precio: servicioSeleccionado?.precio || null,
+          duracion: servicioSeleccionado?.tiempo || null,
+          creadoEn: new Date()
+        });
+        alert("Reserva guardada correctamente!");
+        form.reset();
+        detallesServicio.classList.add("hidden");
+      } catch (error) {
+        alert("Error al guardar la reserva: " + error.message);
+      }
     });
   </script>
-
 </body>
 </html>

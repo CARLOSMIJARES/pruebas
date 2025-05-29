@@ -50,21 +50,33 @@
     table {
       width: 100%;
       max-width: 600px;
+      table-layout: fixed;
       margin-top: 20px;
       background-color: white;
       border-collapse: separate;
-      border-spacing: 0;
-      border-radius: 12px;
-      overflow: hidden;
+      border-spacing: 0 10px;
     }
     th, td {
       border: 1px solid #ccc;
       padding: 12px;
       text-align: center;
-      border-radius: 8px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     th {
       background-color: #dabaa3;
+      border-radius: 12px 12px 0 0;
+      padding: 12px;
+      text-align: center;
+      color: white;
+    }
+    td {
+      background-color: #fef6f0;
+      padding: 16px;
+      text-align: center;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
     .columna-horas {
       display: flex;
@@ -90,7 +102,6 @@
       text-align: right;
       flex: 0.5;
     }
-    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -111,52 +122,93 @@
   </style>
 </head>
 <body class="min-h-screen relative pb-20">
-  <header class="w-full h-[100px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
-    <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
-  </header>
+<header class="w-full h-[100px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
+  <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
+</header>
 
-  <main class="flex flex-col items-center px-4 mt-6 space-y-6">
-    <div class="calendar" id="calendar"></div>
+<main class="flex flex-col items-center px-4 mt-6 space-y-6">
+  <div class="calendar" id="calendar"></div>
 
-    <div class="flex flex-col items-center space-y-3 w-full max-w-[300px]">
-      <button onclick="window.location.href='clientes.html'" 
-          class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full">
-        Clientes
-      </button>
-      <a href="registrar_nuevo_cliente.html" 
-         class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full text-center block">
-        Registrar Nuevo Cliente
-      </a>
-      <a href="registrar_nueva_reserva.html" 
-         class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full text-center block">
-        Registrar Nueva Reserva
-      </a>
-    </div>
+  <div class="flex flex-col items-center space-y-3 w-full max-w-[300px]">
+    <button onclick="window.location.href='clientes.html'"
+        class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full">
+      Clientes
+    </button>
+    <a href="registrar_nuevo_cliente.html"
+       class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full text-center block">
+      Registrar Nuevo Cliente
+    </a>
+    <a href="registrar_nueva_reserva.html"
+       class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full text-center block">
+      Registrar Nueva Reserva
+    </a>
+  </div>
 
-    <table id="tabla-horarios">
-      <thead>
-        <tr>
-          <th>Hora</th>
-          <th>Norle</th>
-          <th>Dalia</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </main>
+  <table id="tabla-horarios">
+    <thead>
+      <tr>
+        <th style="width: 100px;">Hora</th>
+        <th style="width: 250px;">Norle</th>
+        <th style="width: 250px;">Dalia</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
 
-  <!-- Modal para mostrar detalles de la reserva -->
-  <div id="modalReserva" class="modal">
-    <div class="modal-content">
-      <h2 class="font-bold text-lg mb-2">Detalles de la Reserva</h2>
-      <p id="detalleReserva"></p>
-      <button onclick="cerrarModal()" class="bg-[#dabaa3] hover:bg-[#c7aa94] text-white px-4 py-2 rounded mt-3">Cerrar</button>
+<!-- MODAL INTEGRADO -->
+<div id="modalReserva" class="modal">
+  <div class="modal-content">
+    <h2 class="font-bold text-lg mb-2">Detalles de la Reserva</h2>
+    <p id="detalleReserva"></p>
+    <div class="flex space-x-2 mt-3">
+      <button onclick="editarReserva()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Editar</button>
+      <!-- MODAL DE EDICIÓN DE RESERVA -->
+<div id="modalEditarReserva" class="modal">
+  <div class="modal-content">
+    <h2 class="font-bold text-lg mb-2">Editar Reserva</h2>
+    <form id="formEditarReserva">
+      <label class="block text-sm font-medium mb-1">Cliente:</label>
+      <input type="text" id="editCliente" class="border rounded w-full px-2 py-1 mb-2" required>
+      
+      <label class="block text-sm font-medium mb-1">Servicio:</label>
+      <input type="text" id="editServicio" class="border rounded w-full px-2 py-1 mb-2" required>
+      
+      <label class="block text-sm font-medium mb-1">Duración (min):</label>
+      <input type="number" id="editDuracion" class="border rounded w-full px-2 py-1 mb-2" required>
+      
+      <label class="block text-sm font-medium mb-1">Fecha:</label>
+      <input type="date" id="editFecha" class="border rounded w-full px-2 py-1 mb-2" required>
+      
+      <label class="block text-sm font-medium mb-1">Hora:</label>
+      <input type="time" id="editHora" class="border rounded w-full px-2 py-1 mb-2" required>
+      
+      <label class="block text-sm font-medium mb-1">Manicurista:</label>
+      <select id="editManicurista" class="border rounded w-full px-2 py-1 mb-2" required>
+        <option value="Norle">Norle</option>
+        <option value="Dalia">Dalia</option>
+      </select>
+      
+      <label class="block text-sm font-medium mb-1">Precio:</label>
+      <input type="number" id="editPrecio" class="border rounded w-full px-2 py-1 mb-2" required>
+      
+      <div class="flex space-x-2 mt-3">
+        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Guardar</button>
+        <button type="button" onclick="cerrarModalEditar()" class="bg-[#dabaa3] hover:bg-[#c7aa94] text-white px-4 py-2 rounded">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+      <button onclick="eliminarReserva()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Eliminar</button>
+      <button onclick="cerrarModal()" class="bg-[#dabaa3] hover:bg-[#c7aa94] text-white px-4 py-2 rounded">Cerrar</button>
     </div>
   </div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-  import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+  import { getFirestore, collection, query, where, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
@@ -169,6 +221,8 @@
   };
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
+  let reservaSeleccionada = null;
 
   const tablaHorarios = document.getElementById("tabla-horarios").getElementsByTagName("tbody")[0];
   const bloquesHora = [];
@@ -212,49 +266,42 @@
     onSnapshot(q, (snapshot) => {
       bloquesHora.forEach(horaBase => {
         ["00", "15", "30", "45"].forEach(minuto => {
-          const idNorle = `Norle-${horaBase}:${minuto}`;
-          const idDalia = `Dalia-${horaBase}:${minuto}`;
-          document.getElementById(idNorle).textContent = "";
-          document.getElementById(idDalia).textContent = "";
-          document.getElementById(idNorle).style.backgroundColor = "";
-          document.getElementById(idDalia).style.backgroundColor = "";
-          document.getElementById(idNorle).onclick = null;
-          document.getElementById(idDalia).onclick = null;
+          ["Norle", "Dalia"].forEach(manicurista => {
+            const id = `${manicurista}-${horaBase}:${minuto}`;
+            const celda = document.getElementById(id);
+            if (celda) {
+              celda.textContent = "";
+              celda.style.backgroundColor = "";
+              celda.style.display = "";
+              celda.rowSpan = 1;
+              celda.onclick = null;
+            }
+          });
         });
       });
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        const { manicurista, hora, duracion, cliente, servicio, fecha, precio } = data;
-        const [horaBase, minutoBase] = hora.split(":").map(n => parseInt(n));
+        const { manicurista, hora, duracion, cliente, servicio, precio } = data;
+        const [horaBase, minutoBase] = hora.split(":").map(Number);
         const totalBloques = Math.ceil(duracion / 15);
 
         let minutosTotales = minutoBase;
-        let horaActual = horaBase + Math.floor(minutosTotales / 60);
-        let minutoActual = minutosTotales % 60;
-
-        const horaStr = horaActual.toString().padStart(2, '0');
-        const minutoStr = minutoActual.toString().padStart(2, '0');
-        const idCelda = `${manicurista}-${horaStr}:${minutoStr}`;
-        const celda = document.getElementById(idCelda);
-
-        if (celda) {
-          celda.innerHTML = `<div><strong>${cliente}</strong></div><div>${servicio}</div>`;
-          celda.style.backgroundColor = "#dabea3";
-          celda.rowSpan = totalBloques;
-
-          celda.onclick = () => mostrarDetalleReserva(data);
-
-          for (let i = 1; i < totalBloques; i++) {
-            let minutosTotalesSiguiente = minutoBase + i * 15;
-            let horaSiguiente = horaBase + Math.floor(minutosTotalesSiguiente / 60);
-            let minutoSiguiente = minutosTotalesSiguiente % 60;
-            const horaSiguienteStr = horaSiguiente.toString().padStart(2, '0');
-            const minutoSiguienteStr = minutoSiguiente.toString().padStart(2, '0');
-            const idSiguiente = `${manicurista}-${horaSiguienteStr}:${minutoSiguienteStr}`;
-            const celdaSiguiente = document.getElementById(idSiguiente);
-            if (celdaSiguiente) {
-              celdaSiguiente.style.display = "none";
+        let horaActual = horaBase;
+        for (let i = 0; i < totalBloques; i++) {
+          const minutos = minutosTotales + i * 15;
+          const horaBloque = horaBase + Math.floor(minutos / 60);
+          const minutoBloque = minutos % 60;
+          const id = `${manicurista}-${horaBloque.toString().padStart(2, '0')}:${minutoBloque.toString().padStart(2, '0')}`;
+          const celda = document.getElementById(id);
+          if (celda) {
+            if (i === 0) {
+              celda.innerHTML = `<div><strong>${cliente}</strong></div><div>${servicio}</div>`;
+              celda.style.backgroundColor = "#dabea3";
+              celda.rowSpan = totalBloques;
+              celda.onclick = () => mostrarDetalleReserva({...data, id: doc.id});
+            } else {
+              celda.style.display = "none";
             }
           }
         }
@@ -263,6 +310,7 @@
   }
 
   function mostrarDetalleReserva(data) {
+    reservaSeleccionada = data;
     const detalle = `
       <strong>Cliente:</strong> ${data.cliente}<br>
       <strong>Servicio:</strong> ${data.servicio}<br>
@@ -270,10 +318,62 @@
       <strong>Fecha:</strong> ${data.fecha}<br>
       <strong>Hora:</strong> ${data.hora}<br>
       <strong>Manicurista:</strong> ${data.manicurista}<br>
-      <strong>precio:</strong> $${data.precio}
+      <strong>Precio:</strong> $${data.precio}
     `;
     document.getElementById("detalleReserva").innerHTML = detalle;
     document.getElementById("modalReserva").style.display = "flex";
+  }
+
+window.editarReserva = function() {
+  if (reservaSeleccionada) {
+    // Mostrar datos en el formulario
+    document.getElementById('editCliente').value = reservaSeleccionada.cliente;
+    document.getElementById('editServicio').value = reservaSeleccionada.servicio;
+    document.getElementById('editDuracion').value = reservaSeleccionada.duracion;
+    document.getElementById('editFecha').value = reservaSeleccionada.fecha;
+    document.getElementById('editHora').value = reservaSeleccionada.hora;
+    document.getElementById('editManicurista').value = reservaSeleccionada.manicurista;
+    document.getElementById('editPrecio').value = reservaSeleccionada.precio;
+    document.getElementById('modalEditarReserva').style.display = 'flex';
+  }
+};
+
+document.getElementById('formEditarReserva').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  if (reservaSeleccionada) {
+    const nuevaReserva = {
+      cliente: document.getElementById('editCliente').value,
+      servicio: document.getElementById('editServicio').value,
+      duracion: parseInt(document.getElementById('editDuracion').value),
+      fecha: document.getElementById('editFecha').value,
+      hora: document.getElementById('editHora').value,
+      manicurista: document.getElementById('editManicurista').value,
+      precio: parseFloat(document.getElementById('editPrecio').value)
+    };
+    try {
+      const reservaRef = doc(db, "reservas", reservaSeleccionada.id);
+      await updateDoc(reservaRef, nuevaReserva);
+      cerrarModalEditar();
+      cerrarModal(); // También cerramos el modal anterior
+      alert("Reserva actualizada exitosamente.");
+    } catch (error) {
+      console.error("Error al actualizar la reserva: ", error);
+      alert("Error al actualizar la reserva.");
+    }
+  }
+});
+
+window.cerrarModalEditar = function() {
+  document.getElementById('modalEditarReserva').style.display = 'none';
+};
+
+  window.eliminarReserva = async function() {
+    if (reservaSeleccionada) {
+      if (confirm("¿Estás seguro de que deseas eliminar esta reserva?")) {
+        await deleteDoc(doc(db, "reservas", reservaSeleccionada.id));
+        cerrarModal();
+      }
+    }
   }
 
   window.cerrarModal = function() {

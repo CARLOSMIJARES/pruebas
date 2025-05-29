@@ -11,93 +11,82 @@
       font-family: 'Raleway', sans-serif;
       background-color: #e7ceb4;
       color: black;
-      margin: 0;
-      padding: 0;
     }
-
     .calendar {
       width: 100%;
-      max-width: 280px;
+      max-width: 300px;
       background-color: white;
       border-radius: 12px;
-      padding: 10px;
+      padding: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      margin: 0 auto;
     }
-
     .calendar-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
     }
-
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
+      gap: 5px;
       text-align: center;
     }
-
     .day {
-      padding: 6px;
+      padding: 8px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.85rem;
     }
-
     .day:hover {
       background-color: #f4e0d1;
     }
-
     .selected {
       background-color: #dabea3;
       color: white;
     }
-
     .today {
       border: 2px solid #dabea3;
     }
-
     table {
       width: 100%;
+      max-width: 600px;
       table-layout: fixed;
       margin-top: 20px;
       background-color: white;
       border-collapse: separate;
-      border-spacing: 0 8px;
+      border-spacing: 0 10px;
     }
-
     th, td {
       border: 1px solid #ccc;
-      padding: 8px 10px;
+      padding: 12px;
       text-align: center;
       word-wrap: break-word;
-      font-size: 0.85rem;
+      overflow-wrap: break-word;
     }
-
     th {
       background-color: #dabaa3;
       border-radius: 12px 12px 0 0;
+      padding: 12px;
+      text-align: center;
       color: white;
     }
-
     td {
       background-color: #fef6f0;
+      padding: 16px;
+      text-align: center;
       border-radius: 12px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-
     .columna-horas {
       display: flex;
       align-items: center;
       justify-content: space-between;
       background-color: #f4e0d1;
       border-radius: 8px;
-      padding: 6px;
-      font-size: 0.75rem;
+      padding: 4px 8px;
+      font-size: 0.85rem;
     }
-
     .hora-bloque {
       font-size: 1rem;
       font-weight: 700;
@@ -105,16 +94,14 @@
       text-align: center;
       flex: 1;
     }
-
     .hora-minutos {
       display: flex;
       flex-direction: column;
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       color: #555;
       text-align: right;
       flex: 0.5;
     }
-
     .modal {
       display: none;
       position: fixed;
@@ -125,72 +112,24 @@
       justify-content: center;
       align-items: center;
     }
-
     .modal-content {
       background: white;
-      padding: 15px;
+      padding: 20px;
       border-radius: 8px;
-      max-width: 300px;
+      max-width: 400px;
       width: 90%;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-
-
-      table {
-        width: 100%;
-        font-size: 14px;
-      }
-
-      th, td {
-        padding: 6px 8px;
-        font-size: 14px;
-      }
-
-      .columna-horas {
-        flex-direction: column;
-        font-size: 0.7rem;
-        text-align: left;
-        padding: 4px 8px;
-      }
-
-      .hora-bloque {
-        font-size: 1.2rem;
-      }
-
-      .hora-minutos {
-        font-size: 0.6rem;
-      }
-
-      .modal-content {
-        padding: 12px;
-        width: 90%;
-      }
-
-      /* Ajuste en botones para que sean más compactos */
-      button, a {
-        font-size: 14px;
-        padding: 8px 10px;
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      table, th, td {
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-    }
-
   </style>
 </head>
-<body class="min-h-screen relative pb-10">
-<header class="w-full h-[80px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
+<body class="min-h-screen relative pb-20">
+<header class="w-full h-[100px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
   <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
 </header>
 
-<main class="flex flex-col items-center px-4 mt-4 space-y-4">
+<main class="flex flex-col items-center px-4 mt-6 space-y-6">
   <div class="calendar" id="calendar"></div>
 
-  <div class="flex flex-col items-center space-y-3 w-full max-w-[280px]">
+  <div class="flex flex-col items-center space-y-3 w-full max-w-[300px]">
     <button onclick="window.location.href='clientes.html'"
         class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full">
       Clientes
@@ -208,9 +147,9 @@
   <table id="tabla-horarios">
     <thead>
       <tr>
-        <th style="width: 90px;">Hora</th>
-        <th style="width: 200px;">Norle</th>
-        <th style="width: 200px;">Dalia</th>
+        <th style="width: 100px;">Hora</th>
+        <th style="width: 250px;">Norle</th>
+        <th style="width: 250px;">Dalia</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -230,6 +169,7 @@
     </div>
   </div>
 </div>
+
 <script>
   // Función para mostrar los detalles de la reserva en el modal
   function mostrarDetallesReserva(reserva) {

@@ -52,17 +52,20 @@
       max-width: 600px;
       margin-top: 20px;
       background-color: white;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 12px;
+      overflow: hidden;
     }
     th, td {
       border: 1px solid #ccc;
-      padding: 8px;
+      padding: 12px;
       text-align: center;
+      border-radius: 8px;
     }
     th {
       background-color: #dabaa3;
     }
-    /* Diseño adaptado para columna de horas */
     .columna-horas {
       display: flex;
       align-items: center;
@@ -87,20 +90,34 @@
       text-align: right;
       flex: 0.5;
     }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      width: 90%;
+    }
   </style>
 </head>
 <body class="min-h-screen relative pb-20">
-
   <header class="w-full h-[100px] sticky top-0 z-40 overflow-hidden bg-[#DABEA3] flex items-center justify-center">
     <img src="logo.png" alt="SOUL Concept Studio" class="h-full object-contain" />
   </header>
 
   <main class="flex flex-col items-center px-4 mt-6 space-y-6">
-
-    <!-- Calendario -->
     <div class="calendar" id="calendar"></div>
 
-    <!-- Botones -->
     <div class="flex flex-col items-center space-y-3 w-full max-w-[300px]">
       <button onclick="window.location.href='clientes.html'" 
           class="bg-white border border-gray-300 hover:bg-[#f4e0d1] text-black font-semibold py-2 px-4 rounded-lg w-full">
@@ -116,7 +133,6 @@
       </a>
     </div>
 
-    <!-- Tabla de horarios con subfilas -->
     <table id="tabla-horarios">
       <thead>
         <tr>
@@ -125,162 +141,209 @@
           <th>Dalia</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Aquí se generan las filas dinámicamente -->
-      </tbody>
+      <tbody></tbody>
     </table>
-
   </main>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+  <!-- Modal para mostrar detalles de la reserva -->
+  <div id="modalReserva" class="modal">
+    <div class="modal-content">
+      <h2 class="font-bold text-lg mb-2">Detalles de la Reserva</h2>
+      <p id="detalleReserva"></p>
+      <button onclick="cerrarModal()" class="bg-[#dabaa3] hover:bg-[#c7aa94] text-white px-4 py-2 rounded mt-3">Cerrar</button>
+    </div>
+  </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
-      authDomain: "soul-concept-studio-37175.firebaseapp.com",
-      projectId: "soul-concept-studio-37175",
-      storageBucket: "soul-concept-studio-37175.appspot.com",
-      messagingSenderId: "1012154216474",
-      appId: "1:1012154216474:web:e43609177c22da585be1a3",
-      measurementId: "G-ZLL107ZRDP"
-    };
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+  import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyD08h44cuSgH33LCfgeUOquRtK5q-WLhl4",
+    authDomain: "soul-concept-studio-37175.firebaseapp.com",
+    projectId: "soul-concept-studio-37175",
+    storageBucket: "soul-concept-studio-37175.appspot.com",
+    messagingSenderId: "1012154216474",
+    appId: "1:1012154216474:web:e43609177c22da585be1a3",
+    measurementId: "G-ZLL107ZRDP"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    const tablaHorarios = document.getElementById("tabla-horarios").getElementsByTagName("tbody")[0];
-    const bloquesHora = [];
-    for (let h = 8; h <= 21; h++) {
-      const hora = h.toString().padStart(2, '0');
-      bloquesHora.push(hora);
-    }
+  const tablaHorarios = document.getElementById("tabla-horarios").getElementsByTagName("tbody")[0];
+  const bloquesHora = [];
+  for (let h = 8; h <= 21; h++) {
+    const hora = h.toString().padStart(2, '0');
+    bloquesHora.push(hora);
+  }
 
-    // Generar filas con subfilas de 15 minutos
-    bloquesHora.forEach(horaBase => {
-      const minutos = ["00", "15", "30", "45"];
-      minutos.forEach((minuto, idx) => {
-        const horaCompleta = `${horaBase}:${minuto}`;
-        const fila = document.createElement("tr");
-        if (idx === 0) {
-          fila.innerHTML = `
-            <td rowspan="4">
-              <div class="columna-horas">
-                <div class="hora-bloque">${horaBase}</div>
-                <div class="hora-minutos">
-                  <div>00</div>
-                  <div>15</div>
-                  <div>30</div>
-                  <div>45</div>
-                </div>
+  bloquesHora.forEach(horaBase => {
+    const minutos = ["00", "15", "30", "45"];
+    minutos.forEach((minuto, idx) => {
+      const horaCompleta = `${horaBase}:${minuto}`;
+      const fila = document.createElement("tr");
+      if (idx === 0) {
+        fila.innerHTML = `
+          <td rowspan="4">
+            <div class="columna-horas">
+              <div class="hora-bloque">${horaBase}</div>
+              <div class="hora-minutos">
+                <div>00</div><div>15</div><div>30</div><div>45</div>
               </div>
-            </td>
-            <td id="Norle-${horaCompleta}"></td>
-            <td id="Dalia-${horaCompleta}"></td>
-          `;
-        } else {
-          fila.innerHTML = `
-            <td id="Norle-${horaCompleta}"></td>
-            <td id="Dalia-${horaCompleta}"></td>
-          `;
+            </div>
+          </td>
+          <td id="Norle-${horaCompleta}"></td>
+          <td id="Dalia-${horaCompleta}"></td>
+        `;
+      } else {
+        fila.innerHTML = `
+          <td id="Norle-${horaCompleta}"></td>
+          <td id="Dalia-${horaCompleta}"></td>
+        `;
+      }
+      tablaHorarios.appendChild(fila);
+    });
+  });
+
+  function cargarReservas(fecha) {
+    const reservasRef = collection(db, "reservas");
+    const q = query(reservasRef, where("fecha", "==", fecha));
+
+    onSnapshot(q, (snapshot) => {
+      bloquesHora.forEach(horaBase => {
+        ["00", "15", "30", "45"].forEach(minuto => {
+          const idNorle = `Norle-${horaBase}:${minuto}`;
+          const idDalia = `Dalia-${horaBase}:${minuto}`;
+          document.getElementById(idNorle).textContent = "";
+          document.getElementById(idDalia).textContent = "";
+          document.getElementById(idNorle).style.backgroundColor = "";
+          document.getElementById(idDalia).style.backgroundColor = "";
+          document.getElementById(idNorle).onclick = null;
+          document.getElementById(idDalia).onclick = null;
+        });
+      });
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const { manicurista, hora, duracion, cliente, servicio, fecha, total } = data;
+        const [horaBase, minutoBase] = hora.split(":").map(n => parseInt(n));
+        const totalBloques = Math.ceil(duracion / 15);
+
+        let minutosTotales = minutoBase;
+        let horaActual = horaBase + Math.floor(minutosTotales / 60);
+        let minutoActual = minutosTotales % 60;
+
+        const horaStr = horaActual.toString().padStart(2, '0');
+        const minutoStr = minutoActual.toString().padStart(2, '0');
+        const idCelda = `${manicurista}-${horaStr}:${minutoStr}`;
+        const celda = document.getElementById(idCelda);
+
+        if (celda) {
+          celda.innerHTML = `<div><strong>${cliente}</strong></div><div>${servicio}</div>`;
+          celda.style.backgroundColor = "#dabea3";
+          celda.rowSpan = totalBloques;
+
+          celda.onclick = () => mostrarDetalleReserva(data);
+
+          for (let i = 1; i < totalBloques; i++) {
+            let minutosTotalesSiguiente = minutoBase + i * 15;
+            let horaSiguiente = horaBase + Math.floor(minutosTotalesSiguiente / 60);
+            let minutoSiguiente = minutosTotalesSiguiente % 60;
+            const horaSiguienteStr = horaSiguiente.toString().padStart(2, '0');
+            const minutoSiguienteStr = minutoSiguiente.toString().padStart(2, '0');
+            const idSiguiente = `${manicurista}-${horaSiguienteStr}:${minutoSiguienteStr}`;
+            const celdaSiguiente = document.getElementById(idSiguiente);
+            if (celdaSiguiente) {
+              celdaSiguiente.style.display = "none";
+            }
+          }
         }
-        tablaHorarios.appendChild(fila);
       });
     });
+  }
 
-    function cargarReservas(fecha) {
-      const reservasRef = collection(db, "reservas");
-      const q = query(reservasRef, where("fecha", "==", fecha));
+  function mostrarDetalleReserva(data) {
+    const detalle = `
+      <strong>Cliente:</strong> ${data.cliente}<br>
+      <strong>Servicio:</strong> ${data.servicio}<br>
+      <strong>Duración:</strong> ${data.duracion} minutos<br>
+      <strong>Fecha:</strong> ${data.fecha}<br>
+      <strong>Hora:</strong> ${data.hora}<br>
+      <strong>Manicurista:</strong> ${data.manicurista}<br>
+      <strong>Total:</strong> $${data.total}
+    `;
+    document.getElementById("detalleReserva").innerHTML = detalle;
+    document.getElementById("modalReserva").style.display = "flex";
+  }
 
-      onSnapshot(q, (snapshot) => {
-        bloquesHora.forEach(horaBase => {
-          ["00", "15", "30", "45"].forEach(minuto => {
-            const idNorle = `Norle-${horaBase}:${minuto}`;
-            const idDalia = `Dalia-${horaBase}:${minuto}`;
-            document.getElementById(idNorle).textContent = "";
-            document.getElementById(idDalia).textContent = "";
-          });
-        });
+  window.cerrarModal = function() {
+    document.getElementById("modalReserva").style.display = "none";
+  }
 
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const idCelda = `${data.manicurista}-${data.hora}`;
-          const celda = document.getElementById(idCelda);
-          if (celda) {
-            celda.textContent = data.cliente;
-          }
-        });
-      });
-    }
+  const calendarEl = document.getElementById("calendar");
+  const daysShort = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  const todayDate = new Date();
+  let currentMonth = todayDate.getMonth();
+  let currentYear = todayDate.getFullYear();
 
-    const calendarEl = document.getElementById("calendar");
-    const daysShort = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-    const todayDate = new Date();
-    let currentMonth = todayDate.getMonth();
-    let currentYear = todayDate.getFullYear();
-
-    function renderCalendar(month, year) {
-      const firstDay = new Date(year, month).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      let html = `
-        <div class="calendar-header">
-          <button onclick="prevMonth()">←</button>
-          <span class="font-medium capitalize">${new Date(year, month).toLocaleString('es-ES', { month: 'long' })} ${year}</span>
-          <button onclick="nextMonth()">→</button>
-        </div>
-        <div class="calendar-grid font-medium text-sm text-gray-700">
-          ${daysShort.map(d => `<div>${d}</div>`).join('')}
-      `;
-
-      let date = 1;
-      for (let i = 0; i < 6; i++) {
-        for (let j = 0; j < 7; j++) {
-          if (i === 0 && j < firstDay) {
-            html += `<div></div>`;
-          } else if (date > daysInMonth) {
-            break;
-          } else {
-            const isToday = date === todayDate.getDate() && month === todayDate.getMonth() && year === todayDate.getFullYear();
-            html += `<div class="day ${isToday ? 'today selected' : ''}" onclick="selectDate(${date}, ${month}, ${year}, this)">${date}</div>`;
-            date++;
-          }
+  function renderCalendar(month, year) {
+    const firstDay = new Date(year, month).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let html = `
+      <div class="calendar-header">
+        <button onclick="prevMonth()">←</button>
+        <span class="font-medium capitalize">${new Date(year, month).toLocaleString('es-ES', { month: 'long' })} ${year}</span>
+        <button onclick="nextMonth()">→</button>
+      </div>
+      <div class="calendar-grid font-medium text-sm text-gray-700">
+        ${daysShort.map(d => `<div>${d}</div>`).join('')}
+    `;
+    let date = 1;
+    for (let i = 0; i < 6; i++) {
+      for (let j = 0; j < 7; j++) {
+        if (i === 0 && j < firstDay) {
+          html += `<div></div>`;
+        } else if (date > daysInMonth) {
+          break;
+        } else {
+          const isToday = date === todayDate.getDate() && month === todayDate.getMonth() && year === todayDate.getFullYear();
+          html += `<div class="day ${isToday ? 'today selected' : ''}" onclick="selectDate(${date}, ${month}, ${year}, this)">${date}</div>`;
+          date++;
         }
       }
-      html += `</div>`;
-      calendarEl.innerHTML = html;
-
-      const fechaHoy = `${year}-${(month+1).toString().padStart(2, '0')}-${todayDate.getDate().toString().padStart(2, '0')}`;
-      cargarReservas(fechaHoy);
     }
+    html += `</div>`;
+    calendarEl.innerHTML = html;
+    const fechaHoy = `${year}-${(month+1).toString().padStart(2, '0')}-${todayDate.getDate().toString().padStart(2, '0')}`;
+    cargarReservas(fechaHoy);
+  }
 
-    window.selectDate = function(day, month, year, el) {
-      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-      el.classList.add("selected");
-      const fechaSeleccionada = `${year}-${(month+1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-      cargarReservas(fechaSeleccionada);
+  window.selectDate = function(day, month, year, el) {
+    document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+    el.classList.add("selected");
+    const fechaSeleccionada = `${year}-${(month+1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    cargarReservas(fechaSeleccionada);
+  }
+
+  window.prevMonth = function() {
+    currentMonth--;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
     }
-
-    window.prevMonth = function() {
-      currentMonth--;
-      if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-      }
-      renderCalendar(currentMonth, currentYear);
-    }
-
-    window.nextMonth = function() {
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-      renderCalendar(currentMonth, currentYear);
-    }
-
     renderCalendar(currentMonth, currentYear);
-  </script>
+  }
 
+  window.nextMonth = function() {
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    renderCalendar(currentMonth, currentYear);
+  }
+
+  renderCalendar(currentMonth, currentYear);
+</script>
 </body>
 </html>

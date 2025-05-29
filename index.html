@@ -225,7 +225,7 @@
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        const { manicurista, hora, duracion, cliente, servicio, fecha, total } = data;
+        const { manicurista, hora, duracion, cliente, servicio, fecha, precio } = data;
         const [horaBase, minutoBase] = hora.split(":").map(n => parseInt(n));
         const totalBloques = Math.ceil(duracion / 15);
 
@@ -270,7 +270,7 @@
       <strong>Fecha:</strong> ${data.fecha}<br>
       <strong>Hora:</strong> ${data.hora}<br>
       <strong>Manicurista:</strong> ${data.manicurista}<br>
-      <strong>Total:</strong> $${data.total}
+      <strong>precio:</strong> $${data.precio}
     `;
     document.getElementById("detalleReserva").innerHTML = detalle;
     document.getElementById("modalReserva").style.display = "flex";
